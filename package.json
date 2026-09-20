@@ -1,5 +1,8 @@
 {
-  "name": "simple-launcher",
+  "name": "o2",
+  "productName": "o2",
+  "description": "A compact personal desktop launcher",
+  "build": { "appId": "com.ykthalib.o2", "productName": "o2" },
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,7 +10,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node_modules/.bin/tsc -p tsconfig.json && node --test dist/tests/*.test.js",
-    "start": "npm run build && electron dist/src/desktop/main.js",
+    "start": "node_modules/.bin/tsc -p tsconfig.json && node_modules/.bin/electron dist/src/desktop/main.js",
     "simulate": "node_modules/.bin/tsc -p tsconfig.json && node dist/src/desktop/simulate.js"
   },
   "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1" },

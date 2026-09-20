@@ -1,8 +1,8 @@
-# Simple Launcher plan
+# o2 plan
 
 ## Scope
 
-Build a small Alfred-like desktop launcher with application search, a constrained calculator, and linear JSON text workflows. The core is platform-independent TypeScript; Electron is a thin macOS-oriented shell. Linux is used for deterministic simulation only.
+Build `o2`, a small Alfred-like desktop launcher with application search, a constrained calculator, and linear JSON text workflows. The core is platform-independent TypeScript; Electron is a thin macOS-oriented shell. Linux is used for deterministic simulation only.
 
 ## Decisions
 

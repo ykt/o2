@@ -1,6 +1,6 @@
-# Simple Launcher
+# o2
 
-A compact Alfred-like launcher core with app search, safe arithmetic, and linear JSON workflows. It is designed for macOS and developed with Linux simulations; it has no hosted backend or account system.
+A compact Alfred-like `o2` launcher core with app search, safe arithmetic, and linear JSON workflows. It is designed for macOS and developed with Linux simulations; it has no hosted backend or account system.
 
 ## Development
 
