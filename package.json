@@ -2,17 +2,54 @@
   "name": "o2",
   "productName": "o2",
   "description": "A compact personal desktop launcher",
-  "build": { "appId": "com.ykthalib.o2", "productName": "o2" },
-  "version": "0.1.0",
+  "build": {
+    "appId": "com.ykthalib.o2",
+    "productName": "o2",
+    "files": [
+      "dist/src/**/*",
+      "examples/config.json",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "artifactName": "o2-${version}-mac-${arch}.${ext}",
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "notarize": false,
+      "icon": "build/icon.png"
+    },
+    "dmg": {
+      "sign": false
+    }
+  },
+  "version": "0.1.1",
+  "main": "dist/src/desktop/main.js",
+  "author": "YKT",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/copy-assets.mjs",
+    "dist:mac": "npm run build && electron-builder --mac --arm64 --x64 --publish never",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node_modules/.bin/tsc -p tsconfig.json && node --test dist/tests/*.test.js",
-    "start": "node_modules/.bin/tsc -p tsconfig.json && node_modules/.bin/electron dist/src/desktop/main.js",
+    "start": "npm run build && electron .",
     "simulate": "node_modules/.bin/tsc -p tsconfig.json && node dist/src/desktop/simulate.js"
   },
-  "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1" },
-  "devDependencies": { "@types/node": "^22.10.2", "electron": "^34.0.0", "typescript": "^5.7.2" }
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "electron": "^44.4.3",
+    "electron-builder": "^26.15.3",
+    "playwright": "^1.63.0",
+    "typescript": "^5.7.2"
+  }
 }

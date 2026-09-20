@@ -1,4 +1,5 @@
 import { calculate } from "./calculator.js";
+import { isCalculationQuery } from "./calculator.js";
 import type { Adapter, Config, Step } from "./types.js";
 
 export type Trace = { index: number; type: string; input: string; output?: string; error?: string };
@@ -21,4 +22,9 @@ export async function runWorkflow(config: Config, keyword: string, initial: stri
   }
   return { output: input, trace };
 }
-export function dispatch(query: string, config: Config): { kind: "workflow"; keyword: string; input: string } | { kind: "calc"; expression: string } | { kind: "app"; query: string } { const trimmed = query.trim(); for (const w of config.workflows) if (trimmed === w.keyword || trimmed.startsWith(`${w.keyword} `)) return { kind: "workflow", keyword: w.keyword, input: trimmed.slice(w.keyword.length).trim() }; return { kind: "app", query: trimmed }; }
+export function dispatch(query: string, config: Config): { kind: "workflow"; keyword: string; input: string } | { kind: "calc"; expression: string } | { kind: "app"; query: string } {
+  const trimmed = query.trim();
+  for (const w of config.workflows) if (trimmed === w.keyword || (trimmed.startsWith(w.keyword) && /\s/.test(trimmed[w.keyword.length] ?? ""))) return { kind: "workflow", keyword: w.keyword, input: trimmed.slice(w.keyword.length).trimStart() };
+  if (isCalculationQuery(trimmed)) return { kind: "calc", expression: trimmed.replace(/^=/, "").trim() };
+  return { kind: "app", query: trimmed };
+}

@@ -15,7 +15,13 @@ The local workflow file is copied to Electron's user-data directory on first lau
 
 ## Packaging
 
-Run `corepack npm start` on macOS for the Electron shell. A distributable signed macOS package still requires a macOS build/signing host (for example, Electron Forge or electron-builder can be added there). Linux checks cannot prove macOS permissions, global hotkey registration, application metadata, clipboard, or signing behavior.
+Download a DMG at https://o2.ykthalib.com, open it, and drag o2 to Applications. Launch o2, then use Option+Space to reopen it. Type an app name, an expression such as `2 + 3 * 4`, or `calc 20 * 3`. Arrow keys select a result; Enter opens or executes it. Calculator results are copied to the clipboard. The menu bar provides Edit workflows, Reload workflows, and Quit.
+
+Version 0.1.1 is an ad-hoc signed preview, not Apple Developer ID signed or notarized. If macOS blocks a trusted download, use System Settings > Privacy & Security > Open Anyway after attempting to open it. Do not disable Gatekeeper.
+
+Build both Apple silicon and Intel DMGs on macOS with `npm ci` then `npm run dist:mac`. Artifacts are written to `release/`. The package includes the HTML, CommonJS sandbox preload, default workflow config, and application icon. No Node.js installation is needed to run the downloaded app.
+
+Run `node scripts/smoke.mjs` after `npm run build` for native Electron checks, or set `O2_EXECUTABLE` to the packaged app's executable. The smoke check uses an isolated temporary profile. Developer ID signing and notarization require your own Apple credentials and a corresponding build configuration change.
 
 ## Safety
 
