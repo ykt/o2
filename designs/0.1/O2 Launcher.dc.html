@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #0b100d; }
+  a { color: #4ad295; } a:hover { color: #7ce3b6; }
+  ::selection { background: rgba(74,210,149,.3); }
+  @keyframes o2in { from { opacity: 0; transform: translateY(-10px) scale(.985); } to { opacity: 1; transform: none; } }
+  @keyframes o2row { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @keyframes o2caret { 0%,45% { opacity: 1 } 55%,100% { opacity: 0 } }
+  #o2scroll::-webkit-scrollbar { width: 8px; }
+  #o2scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 8px; }
+</style>
+</helmet>
+<div style="--accent: {{ accent }}; min-height: 760px; display: flex; flex-direction: column; align-items: center; padding: 96px 24px 40px; box-sizing: border-box; font-family: Geist, -apple-system, BlinkMacSystemFont, sans-serif; background: radial-gradient(120% 80% at 50% -10%, #17241d 0%, #0b100d 62%); color: #e8efea;">
+
+  <div style="width: min(760px, 100%); border-radius: 18px; overflow: hidden; background: rgba(16,23,19,.86); backdrop-filter: blur(40px) saturate(180%); border: 1px solid rgba(255,255,255,.09); box-shadow: 0 40px 90px -20px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.4); animation: o2in .34s cubic-bezier(.2,.9,.25,1);">
+
+    <div style="{{ barStyle }}">
+      <div style="{{ markStyle }}">{{ markLabel }}</div>
+      <div style="position: relative; flex: 1; min-width: 0; display: flex; align-items: center;">
+        <input value="{{ query }}" onChange="{{ onInput }}" ref="{{ inputRef }}" placeholder="Search apps, run a workflow, do math" spellcheck="false" autocomplete="off" style="width: 100%; font: 400 26px/1.2 Geist, -apple-system, sans-serif; letter-spacing: -.015em; background: transparent; border: 0; outline: none; color: #f0f5f2; padding: 6px 0; caret-color: var(--accent);">
+        <span style="{{ ghostStyle }}">{{ ghost }}</span>
+      </div>
+      <div style="{{ modeStyle }}">{{ modeLabel }}</div>
+    </div>
+
+    <div id="o2scroll" style="{{ listStyle }}">
+      <sc-for list="{{ rows }}" as="row" hint-placeholder-count="5">
+        <sc-if value="{{ row.isHeader }}">
+          <div style="display: flex; align-items: baseline; gap: 10px; padding: 14px 18px 7px; font-size: 10.5px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: rgba(232,239,234,.34);">
+            <span style="white-space: nowrap;">{{ row.title }}</span>
+            <span style="flex: 1; min-width: 0; height: 1px; background: rgba(255,255,255,.055);"></span>
+            <span style="font-family: 'Geist Mono', monospace; letter-spacing: .04em;">{{ row.count }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ row.isRow }}">
+          <div onClick="{{ row.onClick }}" onMouseMove="{{ row.onHover }}" style="{{ row.style }}">
+            <div style="{{ row.tileStyle }}">{{ row.glyph }}</div>
+            <div style="min-width: 0; flex: 1;">
+              <div style="font-size: 15.5px; font-weight: 450; letter-spacing: -.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ row.title }}</div>
+              <div style="font-size: 12.5px; color: rgba(232,239,234,.45); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ row.subtitle }}</div>
+            </div>
+            <div style="{{ row.hintStyle }}">{{ row.hint }}</div>
+          </div>
+        </sc-if>
+      </sc-for>
+      <sc-if value="{{ isEmpty }}">
+        <div style="padding: 44px 24px 48px; text-align: center;">
+          <div style="font-size: 15px; color: rgba(232,239,234,.6);">Nothing matches “{{ query }}”</div>
+          <div style="font-size: 12.5px; color: rgba(232,239,234,.34); margin-top: 8px;">Press ⏎ to search the web instead</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 16px; height: 46px; border-top: 1px solid rgba(255,255,255,.06); background: rgba(0,0,0,.18);">
+      <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+        <button onClick="{{ toggleConfig }}" style="display: flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 5px 8px; border-radius: 7px; cursor: pointer; font: 400 11.5px 'Geist Mono', monospace; color: rgba(232,239,234,.45);" style-hover="background: rgba(255,255,255,.06); color: rgba(232,239,234,.8);">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent);"></span>
+          ~/.config/o2/config.json
+        </button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 11px; color: rgba(232,239,234,.32); font-family: 'Geist Mono', monospace; white-space: nowrap;">
+        <span>{{ statusText }}</span>
+        <span>⏎ run</span>
+        <span>⌘L large</span>
+        <span>⌘, config</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="{{ toastStyle }}">{{ toast }}</div>
+
+  <div onClick="{{ dismissLarge }}" style="{{ largeStyle }}">
+    <div style="{{ largeTextStyle }}">{{ largeText }}</div>
+    <div style="font: 400 12px 'Geist Mono', monospace; letter-spacing: .06em; color: rgba(243,248,245,.32);">esc or click to dismiss</div>
+  </div>
+
+  <div style="{{ configStyle }}">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,.07);">
+      <div>
+        <div style="font-size: 13.5px; font-weight: 500;">config.json</div>
+        <div style="font-size: 11.5px; color: rgba(232,239,234,.4); margin-top: 3px; font-family: 'Geist Mono', monospace;">3 workflows · validated · read-only here</div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button onClick="{{ openEditor }}" style="border: 1px solid rgba(74,210,149,.35); background: rgba(74,210,149,.12); color: var(--accent); font: 500 12px Geist, sans-serif; padding: 7px 12px; border-radius: 8px; cursor: pointer;" style-hover="background: rgba(74,210,149,.2);">Open in editor</button>
+        <button onClick="{{ toggleConfig }}" style="border: 1px solid rgba(255,255,255,.1); background: transparent; color: rgba(232,239,234,.6); font: 400 12px Geist, sans-serif; padding: 7px 11px; border-radius: 8px; cursor: pointer;" style-hover="color: #e8efea; background: rgba(255,255,255,.06);">Close</button>
+      </div>
+    </div>
+    <pre style="margin: 0; padding: 16px 18px 20px; font: 400 12px/1.85 'Geist Mono', monospace; color: rgba(232,239,234,.55); overflow: auto; max-height: 300px;">{
+  <span style="color:#7fb0d6;">"version"</span>: <span style="color:#d8a657;">1</span>,
+  <span style="color:#7fb0d6;">"workflows"</span>: [
+    {
+      <span style="color:#7fb0d6;">"id"</span>: <span style="color:#4ad295;">"calculate-copy"</span>,
+      <span style="color:#7fb0d6;">"keyword"</span>: <span style="color:#4ad295;">"calc"</span>,
+      <span style="color:#7fb0d6;">"title"</span>: <span style="color:#4ad295;">"Calculate and copy"</span>,
+      <span style="color:#7fb0d6;">"steps"</span>: [{ <span style="color:#7fb0d6;">"type"</span>: <span style="color:#4ad295;">"calc"</span> }, { <span style="color:#7fb0d6;">"type"</span>: <span style="color:#4ad295;">"copy"</span> }]
+    },
+    {
+      <span style="color:#7fb0d6;">"id"</span>: <span style="color:#4ad295;">"uppercase-copy"</span>,
+      <span style="color:#7fb0d6;">"keyword"</span>: <span style="color:#4ad295;">"upper"</span>,
+      <span style="color:#7fb0d6;">"title"</span>: <span style="color:#4ad295;">"Uppercase and copy"</span>,
+      <span style="color:#7fb0d6;">"steps"</span>: [
+        { <span style="color:#7fb0d6;">"type"</span>: <span style="color:#4ad295;">"exec"</span>, <span style="color:#7fb0d6;">"command"</span>: <span style="color:#4ad295;">"/usr/bin/tr"</span>, <span style="color:#7fb0d6;">"args"</span>: [<span style="color:#4ad295;">"[:lower:]"</span>, <span style="color:#4ad295;">"[:upper:]"</span>] },
+        { <span style="color:#7fb0d6;">"type"</span>: <span style="color:#4ad295;">"copy"</span> }
+      ]
+    },
+    {
+      <span style="color:#7fb0d6;">"id"</span>: <span style="color:#4ad295;">"github-search"</span>,
+      <span style="color:#7fb0d6;">"keyword"</span>: <span style="color:#4ad295;">"gh"</span>,
+      <span style="color:#7fb0d6;">"title"</span>: <span style="color:#4ad295;">"Search GitHub"</span>,
+      <span style="color:#7fb0d6;">"steps"</span>: [{ <span style="color:#7fb0d6;">"type"</span>: <span style="color:#4ad295;">"openUrl"</span>, <span style="color:#7fb0d6;">"value"</span>: <span style="color:#4ad295;">"https://github.com/search?q=<span>{</span>{input}}"</span> }]
+    }
+  ]
+}</pre>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;barStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;hairline&quot;,&quot;glass&quot;,&quot;token&quot;],&quot;default&quot;:&quot;hairline&quot;,&quot;tsType&quot;:&quot;'hairline'|'glass'|'token'&quot;,&quot;section&quot;:&quot;Search bar&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;options&quot;:[&quot;#7cc3a2&quot;,&quot;#9db8ad&quot;,&quot;#8fa8c4&quot;,&quot;#c9a882&quot;],&quot;default&quot;:&quot;#7cc3a2&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Search bar&quot;},&quot;showHints&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Results&quot;}}">
+const APPS = [
+  { name: "Safari", cat: "Applications", tint: "#4aa3ff", path: "/Applications/Safari.app" },
+  { name: "Visual Studio Code", cat: "Developer", tint: "#4aa3ff", path: "/Applications/Visual Studio Code.app" },
+  { name: "Slack", cat: "Applications", tint: "#c86bd8", path: "/Applications/Slack.app" },
+  { name: "Spotify", cat: "Applications", tint: "#4ad295", path: "/Applications/Spotify.app" },
+  { name: "Terminal", cat: "Utilities", tint: "#9aa8a1", path: "/System/Applications/Utilities/Terminal.app" },
+  { name: "System Settings", cat: "Utilities", tint: "#9aa8a1", path: "/System/Applications/System Settings.app" },
+  { name: "Notes", cat: "Applications", tint: "#e0b23c", path: "/System/Applications/Notes.app" },
+  { name: "Figma", cat: "Applications", tint: "#e8734a", path: "/Applications/Figma.app" },
+  { name: "Calendar", cat: "Applications", tint: "#e05a5a", path: "/System/Applications/Calendar.app" },
+  { name: "Mail", cat: "Applications", tint: "#4aa3ff", path: "/System/Applications/Mail.app" },
+  { name: "Docker Desktop", cat: "Developer", tint: "#4aa3ff", path: "/Applications/Docker.app" },
+  { name: "Simulator", cat: "Developer", tint: "#9aa8a1", path: "/Applications/Xcode.app/Contents/Developer/Applications/Simulator.app" },
+  { name: "Activity Monitor", cat: "Utilities", tint: "#9aa8a1", path: "/System/Applications/Utilities/Activity Monitor.app" },
+  { name: "Preview", cat: "Applications", tint: "#9aa8a1", path: "/System/Applications/Preview.app" }
+];
+
+const WORKFLOWS = [
+  { id: "calculate-copy", keyword: "calc", title: "Calculate and copy", steps: ["calc", "copy"], hintArg: "20 * 3" },
+  { id: "uppercase-copy", keyword: "upper", title: "Uppercase and copy", steps: ["exec", "copy"], hintArg: "hello" },
+  { id: "large-type", keyword: "large", title: "Large Type", steps: ["display"], hintArg: "0900 1234 5678" },
+  { id: "github-search", keyword: "gh", title: "Search GitHub", steps: ["openUrl"], hintArg: "electron" },
+  { id: "google-search", keyword: "g", title: "Search Google", steps: ["openUrl"], hintArg: "alfred alternatives" },
+  { id: "youtube-search", keyword: "yt", title: "Search YouTube", steps: ["openUrl"], hintArg: "swiftui" }
+];
+
+const RECENTS = ["Visual Studio Code", "Safari", "Spotify"];
+
+function isCalc(q) {
+  const s = q.trim();
+  return s.startsWith("=") || (/^[\d\s().+*/-]+$/.test(s) && /[+*/-]/.test(s) && /\d/.test(s));
+}
+function calculate(raw) {
+  const s = raw.replace(/^=/, "").trim();
+  if (!/^[\d\s().+*/-]+$/.test(s) || !s) return null;
+  try {
+    const v = Function('"use strict";return (' + s + ")")();
+    if (typeof v !== "number" || !isFinite(v)) return null;
+    return String(Number(v.toPrecision(12)));
+  } catch (e) { return null; }
+}
+function score(name, q) {
+  const n = name.toLowerCase(), t = q.toLowerCase();
+  if (!t) return 0;
+  if (n.startsWith(t)) return 1000 - n.length;
+  const initials = name.split(/[\s-]+/).map(w => w[0] || "").join("").toLowerCase();
+  if (initials.startsWith(t)) return 900 - n.length;
+  const wordHit = name.split(/[\s-]+/).some(w => w.toLowerCase().startsWith(t));
+  if (wordHit) return 780 - n.length;
+  let i = 0, gaps = 0;
+  for (const c of n) { if (c === t[i]) i++; else if (i > 0 && i < t.length) gaps++; }
+  return i === t.length ? 520 - gaps : -1;
+}
+
+class Component extends DCLogic {
+  state = { query: "", sel: 0, toast: "", showConfig: false, mounted: false, large: null };
+
+  componentDidMount() {
+    this.onKey = (e) => {
+      if (this.state.large !== null) { e.preventDefault(); this.setState({ large: null }); return; }
+      const rows = this.compute().items;
+      if (e.key.toLowerCase() === "l" && e.metaKey) {
+        e.preventDefault();
+        const it = rows[this.state.sel];
+        if (it) this.setState({ large: it.kind === "calc" ? it.title : (this.state.query.trim() || it.title) });
+        return;
+      }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const next = Math.max(0, Math.min(rows.length - 1, this.state.sel + (e.key === "ArrowDown" ? 1 : -1)));
+        this.setState({ sel: next });
+        const el = document.querySelector('[data-o2-idx="' + next + '"]');
+        if (el && el.parentElement) {
+          const box = el.parentElement, top = el.offsetTop, bot = top + el.offsetHeight;
+          if (top < box.scrollTop) box.scrollTop = top - 8;
+          else if (bot > box.scrollTop + box.clientHeight) box.scrollTop = bot - box.clientHeight + 8;
+        }
+      } else if (e.key === "Enter") { e.preventDefault(); this.run(rows[this.state.sel]); }
+      else if (e.key === "Escape") { e.preventDefault(); this.setState({ query: "", sel: 0, showConfig: false }); }
+      else if (e.key === "," && e.metaKey) { e.preventDefault(); this.setState({ showConfig: !this.state.showConfig }); }
+      else if (e.metaKey && /^[1-9]$/.test(e.key)) { e.preventDefault(); this.run(rows[Number(e.key) - 1]); }
+    };
+    document.addEventListener("keydown", this.onKey);
+    if (this.input) this.input.focus();
+    requestAnimationFrame(() => this.setState({ mounted: true }));
+  }
+  componentWillUnmount() { document.removeEventListener("keydown", this.onKey); clearTimeout(this.t); }
+
+  flash(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this.t);
+    this.t = setTimeout(() => this.setState({ toast: "" }), 2200);
+  }
+  run(item) {
+    if (!item) return;
+    if (item.largeText !== undefined) {
+      if (!item.largeText) { this.flash("Large Type needs some text"); return; }
+      this.setState({ large: item.largeText, query: "", sel: 0 });
+      return;
+    }
+    this.flash(item.action);
+    if (item.kind !== "calc") this.setState({ query: "", sel: 0 });
+  }
+
+  compute() {
+    const q = this.state.query.trim();
+    const groups = [];
+    let ghost = "";
+
+    if (!q) {
+      groups.push({ title: "Recent", items: RECENTS.map(n => APPS.find(a => a.name === n)).filter(Boolean).map(a => this.appItem(a)) });
+      groups.push({ title: "Workflows", items: WORKFLOWS.slice(0, 3).map(w => this.wfItem(w, "", true)) });
+      return this.flatten(groups, "Ready", ghost);
+    }
+
+    const wf = WORKFLOWS.find(w => q === w.keyword || (q.startsWith(w.keyword) && /\s/.test(q[w.keyword.length] || "")));
+    const calcVal = isCalc(q) ? calculate(q) : null;
+    const top = [];
+
+    if (wf) {
+      const arg = q.slice(wf.keyword.length).trim();
+      top.push(this.wfItem(wf, arg, false));
+    } else if (calcVal !== null) {
+      top.push({
+        kind: "calc", glyph: "=", tint: "#4ad295",
+        title: calcVal, subtitle: q.replace(/^=/, "").trim() + "  ·  copies to clipboard",
+        hint: "⏎ copy", action: calcVal + " copied to clipboard"
+      });
+    }
+
+    const matches = APPS.map(a => ({ a, s: score(a.name, q) })).filter(x => x.s >= 0).sort((x, y) => y.s - x.s);
+    if (!top.length && matches.length) {
+      top.push(this.appItem(matches[0].a, true));
+      ghost = matches[0].a.name.toLowerCase().startsWith(q.toLowerCase()) ? matches[0].a.name.slice(q.length) : "";
+    }
+
+    if (top.length) groups.push({ title: wf ? "Workflow" : calcVal !== null ? "Calculator" : "Top hit", items: top });
+
+    const rest = matches.slice(top.length && !wf && calcVal === null ? 1 : 0).map(x => this.appItem(x.a));
+    if (rest.length) groups.push({ title: "Applications", items: rest });
+
+    const kwMatches = WORKFLOWS.filter(w => w !== wf && w.keyword.startsWith(q.toLowerCase().split(" ")[0]));
+    if (kwMatches.length) groups.push({ title: "Workflows", items: kwMatches.map(w => this.wfItem(w, "", true)) });
+
+    groups.push({ title: "Fallback", items: [{
+      kind: "web", glyph: "⌕", tint: "#9aa8a1",
+      title: "Search the web for “" + q + "”", subtitle: "google.com  ·  g " + q,
+      hint: "⏎ open", action: "Opened Google for “" + q + "”"
+    }] });
+
+    const count = groups.reduce((n, g) => n + g.items.length, 0);
+    return this.flatten(groups, count + " results", ghost);
+  }
+
+  appItem(a, isTop) {
+    return {
+      kind: "app", glyph: a.name[0], tint: a.tint,
+      title: a.name, subtitle: isTop ? a.path : a.cat,
+      hint: "⏎ open", action: "Opened " + a.name
+    };
+  }
+  wfItem(w, arg, preview) {
+    if (w.id === "large-type" && !preview) return {
+      kind: "workflow", glyph: "A", tint: "#7cc3a2", largeText: arg,
+      title: "Large Type", subtitle: arg ? "“" + arg + "”  ·  full-screen, read-only" : "type text to display full-screen",
+      hint: "⏎ show", action: ""
+    };
+    return {
+      kind: "workflow", glyph: "›", tint: "#7cc3a2",
+      title: w.title,
+      subtitle: preview
+        ? w.keyword + " " + w.hintArg + "  ·  " + w.steps.join(" → ")
+        : (arg ? "“" + arg + "”  ·  " : "waiting for input  ·  ") + w.steps.join(" → "),
+      hint: preview ? w.keyword : "⏎ run",
+      action: preview ? "Filled keyword " + w.keyword : "Ran " + w.title + (arg ? " → " + arg : "")
+    };
+  }
+
+  flatten(groups, statusText, ghost) {
+    const rows = [], items = [];
+    for (const g of groups) {
+      if (!g.items.length) continue;
+      rows.push({ isHeader: true, isRow: false, title: g.title, count: String(g.items.length) });
+      for (const it of g.items) { it.index = items.length; items.push(it); rows.push(Object.assign({ isHeader: false, isRow: true }, it)); }
+    }
+    return { rows, items, statusText, ghost };
+  }
+
+  renderVals() {
+    const accent = this.props.accent ?? "#7cc3a2";
+    const bar = this.props.barStyle ?? "hairline";
+    const showHints = this.props.showHints ?? true;
+    const { rows, items, statusText, ghost } = this.compute();
+    const sel = Math.min(this.state.sel, Math.max(0, items.length - 1));
+    const q = this.state.query.trim();
+
+    const mode = !q ? "" : items[sel] ? ({ app: "App", calc: "Calculator", workflow: "Workflow", web: "Web" })[items[sel].kind] : "";
+
+    const barBase = "display: flex; align-items: center; gap: 16px; padding: 18px 20px; ";
+    const barStyles = {
+      hairline: barBase + "border-bottom: 1px solid rgba(255,255,255,.07);",
+      glass: barBase + "margin: 14px; padding: 14px 16px; border-radius: 14px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);",
+      token: barBase + "border-bottom: 1px solid rgba(255,255,255,.07);"
+    };
+    const markStyles = {
+      hairline: "font: 600 34px Geist, sans-serif; letter-spacing: -.045em; line-height: 1; color: " + accent + "; flex: none;",
+      glass: "display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: " + accent + "26; border: 1px solid " + accent + "3d; color: " + accent + "; font: 600 20px Geist, sans-serif; letter-spacing: -.04em; flex: none;",
+      token: "display: flex; align-items: center; height: 34px; padding: 0 13px; border-radius: 9px; background: " + accent + "1f; color: " + accent + "; font: 500 14px 'Geist Mono', monospace; flex: none;"
+    };
+    const markLabels = { hairline: "o2", glass: "o", token: mode || "o2" };
+
+    const listBase = "max-height: 430px; overflow-y: auto; padding: 6px 8px 10px; ";
+    const rowsOut = rows.map((r, i) => {
+      if (r.isHeader) return r;
+      const on = r.index === sel;
+      return Object.assign({}, r, {
+        style: "display: flex; align-items: center; gap: 14px; padding: 0 14px; height: 58px; border-radius: 12px; cursor: pointer; transition: background .12s ease; animation: o2row .18s ease both; background: " + (on ? "rgba(255,255,255,.075)" : "transparent") + "; box-shadow: " + (on ? "inset 3px 0 0 -1px " + accent : "none") + ";",
+        tileStyle: "display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 10px; font: 600 15px Geist, sans-serif; color: " + r.tint + "; background: " + r.tint + "1f; border: 1px solid " + r.tint + "2e;",
+        hintStyle: "font: 400 11px 'Geist Mono', monospace; color: rgba(232,239,234,." + (on ? "6" : "22") + "); white-space: nowrap; opacity: " + (showHints ? 1 : 0) + ";",
+        onClick: () => { this.setState({ sel: r.index }); this.run(items[r.index]); },
+        onHover: () => { if (this.state.sel !== r.index) this.setState({ sel: r.index }); }
+      });
+    });
+    rowsOut.forEach((r) => { if (r.isRow) r.dataIdx = r.index; });
+
+    return {
+      accent,
+      query: this.state.query,
+      rows: rowsOut,
+      isEmpty: false,
+      statusText,
+      ghost,
+      ghostStyle: "position: absolute; left: 0; top: 0; display: flex; align-items: center; height: 100%; pointer-events: none; font: 400 26px/1.2 Geist, sans-serif; letter-spacing: -.015em; color: transparent; white-space: pre;",
+      barStyle: barStyles[bar] || barStyles.hairline,
+      markStyle: markStyles[bar] || markStyles.hairline,
+      markLabel: markLabels[bar] || "o2",
+      modeLabel: bar === "token" ? "" : mode,
+      modeStyle: "flex: none; font: 400 11px 'Geist Mono', monospace; letter-spacing: .06em; text-transform: uppercase; color: rgba(232,239,234,.3); opacity: " + (bar !== "token" && mode ? 1 : 0) + "; transition: opacity .15s ease;",
+      listStyle: listBase + (rows.length ? "" : "display: none;"),
+      toast: this.state.toast,
+      toastStyle: "margin-top: 18px; padding: 9px 16px; border-radius: 999px; font: 400 12.5px 'Geist Mono', monospace; color: " + accent + "; background: " + accent + "14; border: 1px solid " + accent + "2e; transition: opacity .2s ease, transform .2s ease; opacity: " + (this.state.toast ? 1 : 0) + "; transform: translateY(" + (this.state.toast ? "0" : "6px") + ");",
+      configStyle: "width: min(760px, 100%); margin-top: 16px; border-radius: 14px; overflow: hidden; background: rgba(16,23,19,.9); border: 1px solid rgba(255,255,255,.08); transition: opacity .2s ease, transform .2s ease; opacity: " + (this.state.showConfig ? 1 : 0) + "; transform: translateY(" + (this.state.showConfig ? "0" : "-8px") + "); pointer-events: " + (this.state.showConfig ? "auto" : "none") + "; max-height: " + (this.state.showConfig ? "460px" : "0px") + ";",
+      largeText: this.state.large || "",
+      largeOn: this.state.large !== null,
+      largeStyle: "position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 8vw; box-sizing: border-box; background: rgba(6,10,8,.93); backdrop-filter: blur(24px); cursor: pointer; transition: opacity .16s ease; opacity: " + (this.state.large !== null ? 1 : 0) + "; pointer-events: " + (this.state.large !== null ? "auto" : "none") + ";",
+      largeTextStyle: "max-width: 100%; text-align: center; font: 300 " + (this.state.large && this.state.large.length > 48 ? "clamp(28px, 5.5vw, 68px)" : this.state.large && this.state.large.length > 18 ? "clamp(40px, 9vw, 116px)" : "clamp(56px, 14vw, 180px)") + "/1.12 Geist, sans-serif; letter-spacing: -.035em; color: #f3f8f5; overflow-wrap: anywhere; user-select: text;",
+      dismissLarge: () => this.setState({ large: null }),
+      inputRef: (el) => { this.input = el; },
+      onInput: (e) => this.setState({ query: e.target.value, sel: 0 }),
+      toggleConfig: () => this.setState({ showConfig: !this.state.showConfig }),
+      openEditor: () => this.flash("Opened ~/.config/o2/config.json in Visual Studio Code")
+    };
+  }
+}
+</script>
+</body>
+</html>
