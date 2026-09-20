@@ -1,0 +1,16 @@
+import test from "node:test"; import assert from "node:assert/strict";
+import { calculate, isCalculationQuery } from "../src/core/calculator.js";
+import { searchApps } from "../src/core/search.js";
+import { ConfigStore, validateConfig } from "../src/core/config.js";
+import { dispatch, runWorkflow } from "../src/core/workflow.js";
+import { FakeAdapter } from "../src/adapters/fake.js";
+import type { AppRecord } from "../src/core/types.js";
+const apps: AppRecord[] = [{ name: "Safari", path: "/Applications/Safari.app", id: "a" }, { name: "Safari Technology Preview", path: "/Applications/STP.app", id: "b" }, { name: "My Safari", path: "/Applications/My Safari.app", id: "c" }, { name: "Safari", path: "/Applications/Safari.app", id: "duplicate" }];
+test("A01/A02 application ranking and dedupe", () => assert.deepEqual(searchApps(apps, "SAFARI").map((a) => a.name), ["Safari", "Safari Technology Preview", "My Safari"]));
+test("A04 empty query", () => assert.deepEqual(searchApps(apps, ""), []));
+test("A05 calculator precedence and safe normalization", () => { assert.equal(calculate("2+3*4"), "14"); assert.equal(calculate("(2+3)*4"), "20"); assert.equal(calculate("-2*-3"), "6"); assert.equal(calculate("0.1+0.2"), "0.3"); assert.equal(calculate("-0"), "0"); });
+test("A06 calculator rejects unsafe input", () => { for (const expression of ["1/0", "foo", "x=1", "2(", "a;process.exit()"] ) assert.throws(() => calculate(expression)); assert.equal(isCalculationQuery("1Password"), false); });
+const config = { version: 1 as const, workflows: [{ id: "calc-copy", keyword: "calc", title: "Calc", steps: [{ type: "calc" as const }, { type: "copy" as const }] }, { id: "upper", keyword: "upper", title: "Upper", steps: [{ type: "exec" as const, command: "/usr/bin/tr", args: ["a", "A"] }, { type: "copy" as const }] }] };
+test("A07/A08 schema and invalid reload preservation", () => { const store = new ConfigStore(config); assert.equal(store.reload({ version: 1, workflows: [{ ...config.workflows[0], keyword: "" }] }).length, 1); assert.equal(store.value.workflows[0].keyword, "calc"); assert.throws(() => validateConfig({ ...config, workflows: [{ ...config.workflows[0], id: "x", keyword: "x" }, { ...config.workflows[1], id: "x", keyword: "x" }] })); });
+test("A09/A10 pipeline and dry run side effects", async () => { const adapter = new FakeAdapter(); const result = await runWorkflow(config, "calc", "2 + 3 * 4", adapter); assert.equal(result.output, "14"); assert.deepEqual(adapter.copied, ["14"]); const dry = await runWorkflow(config, "upper", "hello", adapter, { dryRun: true }); assert.equal(dry.output, "hello"); assert.equal(adapter.executions.length, 0); });
+test("A13 URL validation and A16 boundary", () => { assert.deepEqual(dispatch("calc 2+2", config), { kind: "workflow", keyword: "calc", input: "2+2" }); assert.equal(dispatch("calculator", config).kind, "app"); });

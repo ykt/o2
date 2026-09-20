@@ -1,0 +1,2 @@
+import { readFile } from "node:fs/promises"; import { ConfigStore } from "../core/config.js"; import { FakeAdapter } from "../adapters/fake.js"; import { runWorkflow } from "../core/workflow.js";
+const config = new ConfigStore(JSON.parse(await readFile("examples/config.json", "utf8"))).value; const adapter = new FakeAdapter(); const result = await runWorkflow(config, "calc", "2 + 3 * 4", adapter, { dryRun: true }); console.log(JSON.stringify({ output: result.output, trace: result.trace, sideEffects: adapter }, null, 2));
