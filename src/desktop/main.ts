@@ -29,14 +29,21 @@ function checkQuery(query: unknown): string {
   return query;
 }
 async function results(query: string) {
-  const request = dispatch(query, store.value);
-  if (!query.trim()) return [];
-  if (request.kind === "calc") return [{ id: "calculator", name: calculate(request.expression), detail: "Calculator", kind: "calc" }];
+  const trimmed = query.trim();
+  if (!trimmed) {
+    const recent = ["Visual Studio Code", "Safari", "Spotify"].map(name => apps.find(item => item.name === name)).filter(Boolean).map(item => ({ ...item!, detail: item!.path, kind: "app", group: "Recent", hint: "⏎ open", tint: "#4aa3ff" }));
+    const workflows = store.value.workflows.slice(0, 3).map(workflow => ({ id: workflow.id, name: workflow.title, detail: `${workflow.keyword} · ${workflow.steps.map(step => step.type).join(" → ")}`, kind: "workflow", group: "Workflows", hint: workflow.keyword, tint: "#7cc3a2" }));
+    return [...recent, ...workflows];
+  }
+  const request = dispatch(trimmed, store.value);
+  if (request.kind === "calc") return [{ id: "calculator", name: calculate(request.expression), detail: `${request.expression} · copies to clipboard`, kind: "calc", group: "Top hit", hint: "⏎ copy", tint: "#7cc3a2" }];
   if (request.kind === "workflow") {
     const workflow = store.value.workflows.find(item => item.keyword === request.keyword)!;
-    return [{ id: workflow.id, name: workflow.title, detail: request.input || workflow.keyword, kind: "workflow" }];
+    return [{ id: workflow.id, name: workflow.title, detail: `${request.input || workflow.keyword} · ${workflow.steps.map(step => step.type).join(" → ")}`, kind: "workflow", group: "Top hit", hint: "⏎ run", tint: "#7cc3a2" }];
   }
-  return searchApps(apps, request.query).map(item => ({ ...item, detail: item.path, kind: "app" }));
+  const matches = searchApps(apps, request.query).map(item => ({ ...item, detail: item.path, kind: "app", group: "Applications", hint: "⏎ open", tint: "#4aa3ff" }));
+  const workflows = store.value.workflows.filter(item => item.keyword.includes(request.query.toLocaleLowerCase())).map(workflow => ({ id: workflow.id, name: workflow.title, detail: `${workflow.keyword} · ${workflow.steps.map(step => step.type).join(" → ")}`, kind: "workflow", group: "Workflows", hint: workflow.keyword, tint: "#7cc3a2" }));
+  return [...matches, ...workflows, { id: "web-search", name: `Search the web for “${request.query}”`, detail: "Open a browser search", kind: "web", group: "Fallback", hint: "⏎ open", tint: "#9aa8a1" }];
 }
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
@@ -70,6 +77,8 @@ else {
 app.on("before-quit", () => { quitting = true; active?.abort(); });
 app.on("will-quit", () => globalShortcut.unregisterAll());
 ipcMain.handle("search", async (_event, query: unknown) => results(checkQuery(query)));
+ipcMain.handle("configPeek", async () => ({ path: configPath(), json: JSON.stringify(store.value, null, 2), workflows: store.value.workflows.length }));
+ipcMain.handle("openEditor", async () => shell.openPath(configPath()));
 ipcMain.handle("dismiss", () => { if (active) active.abort(); else window.hide(); });
 ipcMain.handle("execute", async (_event, query: unknown, selectedId: unknown) => {
   const text = checkQuery(query);
@@ -78,8 +87,9 @@ ipcMain.handle("execute", async (_event, query: unknown, selectedId: unknown) =>
   if (!available.find(item => item.id === selectedId)) throw new Error("Select a result first");
   const controller = new AbortController(); active = controller;
   try {
+    if (selectedId === "web-search") { await adapter.openUrl(`https://www.google.com/search?q=${encodeURIComponent(text)}`); window.hide(); return { output: `Opened web search for ${text}` }; }
     const request = dispatch(text, store.value);
-    if (request.kind === "workflow") return await runWorkflow(store.value, request.keyword, request.input, adapter, { signal: controller.signal });
+    if (request.kind === "workflow") { const workflowResult = await runWorkflow(store.value, request.keyword, request.input, adapter, { signal: controller.signal }); return { ...workflowResult, display: store.value.workflows.find(item => item.keyword === request.keyword)?.steps.some(step => step.type === "display") ? request.input : undefined }; }
     if (request.kind === "calc") { const output = calculate(request.expression); await adapter.copy(output); return { output, message: "Copied to clipboard" }; }
     const match = apps.find(item => item.id === selectedId);
     if (!match) throw new Error("Application is no longer available");

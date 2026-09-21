@@ -1,12 +1,13 @@
 import test from "node:test"; import assert from "node:assert/strict";
 import { calculate, isCalculationQuery } from "../src/core/calculator.js";
-import { searchApps } from "../src/core/search.js";
+import { searchApps, score } from "../src/core/search.js";
 import { ConfigStore, validateConfig } from "../src/core/config.js";
 import { dispatch, runWorkflow } from "../src/core/workflow.js";
 import { FakeAdapter } from "../src/adapters/fake.js";
 import type { AppRecord } from "../src/core/types.js";
 const apps: AppRecord[] = [{ name: "Safari", path: "/Applications/Safari.app", id: "a" }, { name: "Safari Technology Preview", path: "/Applications/STP.app", id: "b" }, { name: "My Safari", path: "/Applications/My Safari.app", id: "c" }, { name: "Safari", path: "/Applications/Safari.app", id: "duplicate" }];
 test("A01/A02 application ranking and dedupe", () => assert.deepEqual(searchApps(apps, "SAFARI").map((a) => a.name), ["Safari", "Safari Technology Preview", "My Safari"]));
+test("design ranking and display workflow contract", () => { assert.ok(score("Visual Studio Code", "vsc") > score("Visual Studio Code", "code")); assert.equal(validateConfig({ version: 1, workflows: [{ id: "large", keyword: "large", title: "Large Type", steps: [{ type: "display" }] }] }).workflows[0].steps[0].type, "display"); });
 test("A04 empty query", () => assert.deepEqual(searchApps(apps, ""), []));
 test("A05 calculator precedence and safe normalization", () => { assert.equal(calculate("2+3*4"), "14"); assert.equal(calculate("(2+3)*4"), "20"); assert.equal(calculate("-2*-3"), "6"); assert.equal(calculate("0.1+0.2"), "0.3"); assert.equal(calculate("-0"), "0"); });
 test("A06 calculator rejects unsafe input", () => { for (const expression of ["1/0", "foo", "x=1", "2(", "a;process.exit()"] ) assert.throws(() => calculate(expression)); assert.equal(isCalculationQuery("1Password"), false); });

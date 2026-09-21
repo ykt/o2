@@ -14,6 +14,7 @@ export async function runWorkflow(config: Config, keyword: string, initial: stri
     try {
       if (step.type === "text") input = template(step.value, input);
       else if (step.type === "calc") input = calculate(template(step.expression, input));
+      else if (step.type === "display") { /* renderer presents the unchanged value */ }
       else if (step.type === "copy") { if (!options.dryRun) await adapter.copy(input); }
       else if (step.type === "openUrl") { const parsed = url(template(step.value, input)); if (!options.dryRun) await adapter.openUrl(parsed.toString()); }
       else if (step.type === "exec") { const result = options.dryRun ? { stdout: input, stderr: "" } : await adapter.exec(step.command!, step.args ?? [], input, step.timeoutMs ?? 5000, options.signal); if (result.stdout.length > 1024 * 1024 || result.stderr.length > 1024 * 1024) throw new Error("process output exceeded 1 MiB"); input = result.stdout; }

@@ -1,40 +1,27 @@
 const query = document.querySelector('#query');
-const list = document.querySelector('#results');
-const state = document.querySelector('#state');
-let selected = 0, items = [], revision = 0, running = false;
-function message(text, error = false) { state.textContent = text; state.classList.toggle('error', error); }
+const results = document.querySelector('#results');
+const status = document.querySelector('#status');
+const mode = document.querySelector('#mode');
+const peek = document.querySelector('#peek');
+const large = document.querySelector('#large');
+let items = [], selected = 0, revision = 0, running = false, configData;
+
+function setStatus(text, error = false) { status.textContent = text; status.style.color = error ? '#e05a5a' : ''; }
+function tile(item) { const mark = item.kind === 'calc' ? '=' : item.kind === 'workflow' ? '>' : item.kind === 'web' ? '↗' : (item.name || '?').slice(0, 1).toUpperCase(); return mark; }
 function paint() {
-  list.replaceChildren();
-  items.forEach((item, index) => {
-    const row = document.createElement('li'); row.className = index === selected ? 'selected' : '';
-    row.setAttribute('role', 'option'); row.setAttribute('aria-selected', String(index === selected));
-    const mark = document.createElement('span'); mark.className = 'mark'; mark.textContent = item.kind === 'calc' ? '=' : item.kind === 'workflow' ? '>' : item.name.slice(0, 1);
-    const label = document.createElement('div'); label.className = 'label';
-    const title = document.createElement('strong'); title.textContent = item.name;
-    const detail = document.createElement('small'); detail.textContent = item.detail;
-    label.append(title, detail); row.append(mark, label);
-    row.addEventListener('click', () => { selected = index; paint(); void execute(); });
-    list.append(row);
-  });
+  results.replaceChildren(); let lastGroup = '';
+  if (!items.length) { const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = query.value ? `Nothing matches “${query.value}”` : 'Start typing to search'; const hint = document.createElement('small'); hint.textContent = query.value ? 'Press ⏎ to search the web instead' : 'Recent apps and workflows appear here'; empty.append(hint); results.append(empty); return; }
+  items.forEach((item, index) => { if (item.group !== lastGroup) { lastGroup = item.group; const head = document.createElement('div'); head.className = 'group'; const label = document.createElement('span'); label.textContent = item.group; const rule = document.createElement('hr'); const count = document.createElement('span'); count.textContent = String(items.filter(x => x.group === item.group).length); head.append(label, rule, count); results.append(head); } const row = document.createElement('div'); row.className = `row${index === selected ? ' selected' : ''}`; row.dataset.index = String(index); row.setAttribute('role', 'option'); row.setAttribute('aria-selected', String(index === selected)); const mark = document.createElement('div'); mark.className = 'tile'; mark.textContent = tile(item); mark.style.color = item.tint || '#7cc3a2'; const label = document.createElement('div'); label.className = 'label'; const title = document.createElement('div'); title.className = 'title'; title.textContent = item.name; const subtitle = document.createElement('div'); subtitle.className = 'subtitle'; subtitle.textContent = item.detail || ''; label.append(title, subtitle); const hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = item.hint || ''; row.append(mark, label, hint); row.addEventListener('mouseenter', () => { selected = index; paint(); }); row.addEventListener('click', () => void execute()); results.append(row); });
 }
-async function search() {
-  const current = ++revision; selected = 0;
-  try { const found = await window.launcher.search(query.value); if (current !== revision) return; items = found; paint(); message(query.value && !items.length ? 'No results' : ''); }
-  catch (error) { if (current !== revision) return; items = []; paint(); message(error.message, true); }
-}
-async function execute() {
-  if (running || !items[selected]) return;
-  running = true; query.disabled = true; message('Running...');
-  try { const result = await window.launcher.execute(query.value, items[selected].id); message(result.message || result.output || 'Done'); }
-  catch (error) { message(error.message, true); }
-  finally { running = false; query.disabled = false; query.focus(); }
-}
+async function search() { const current = ++revision; selected = 0; mode.textContent = query.value ? 'SEARCH' : ''; try { const found = await window.launcher.search(query.value); if (current !== revision) return; items = found; paint(); setStatus(items.length ? `${items.length} result${items.length === 1 ? '' : 's'} · ⏎ run · ⌘L large · ⌘, config` : ''); } catch (error) { items = []; paint(); setStatus(error.message, true); } }
+async function execute() { if (running || !items[selected]) return; running = true; query.disabled = true; setStatus('Running…'); try { const result = await window.launcher.execute(query.value, items[selected].id); if (result.display !== undefined) showLarge(result.display); setStatus(result.message || result.output || 'Done'); } catch (error) { setStatus(error.message, true); } finally { running = false; query.disabled = false; query.focus(); } }
+function showLarge(text) { if (!text) { setStatus('Large Type needs some text', true); return; } document.querySelector('#large-text').textContent = text; large.classList.add('open'); }
+function dismissLarge() { large.classList.remove('open'); query.focus(); }
+async function togglePeek() { peek.classList.toggle('open'); if (peek.classList.contains('open')) { configData = await window.launcher.configPeek(); document.querySelector('#peek-meta').textContent = `${configData.workflows} workflows · validated · read-only here`; document.querySelector('#peek-json').textContent = configData.json; } }
 query.addEventListener('input', search);
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') { event.preventDefault(); void window.launcher.dismiss(); }
-  if (running) return;
-  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); selected = Math.max(0, Math.min(items.length - 1, selected + (event.key === 'ArrowDown' ? 1 : -1))); paint(); list.children[selected]?.scrollIntoView({ block: 'nearest' }); }
-  if (event.key === 'Enter') { event.preventDefault(); void execute(); }
-});
-window.launcher.onFocus(() => { query.focus(); query.select(); });
-window.launcher.onNotice(text => message(text, true));
+document.querySelector('#config-button').addEventListener('click', togglePeek);
+document.querySelector('#close-peek').addEventListener('click', togglePeek);
+document.querySelector('#open-editor').addEventListener('click', () => window.launcher.openEditor());
+large.addEventListener('click', dismissLarge);
+document.addEventListener('keydown', event => { if (large.classList.contains('open')) { event.preventDefault(); dismissLarge(); return; } if (event.key === 'Escape') { event.preventDefault(); query.value = ''; search(); peek.classList.remove('open'); void window.launcher.dismiss(); return; } if (running) return; if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); selected = Math.max(0, Math.min(items.length - 1, selected + (event.key === 'ArrowDown' ? 1 : -1))); paint(); document.querySelector(`[data-index="${selected}"]`)?.scrollIntoView({ block: 'nearest' }); } else if (event.key === 'Enter') { event.preventDefault(); void execute(); } else if (event.metaKey && event.key.toLowerCase() === 'l') { event.preventDefault(); const item = items[selected]; showLarge(item?.kind === 'calc' ? item.name : (query.value.trim() || item?.name || '')); } else if (event.metaKey && event.key === ',') { event.preventDefault(); void togglePeek(); } else if (event.metaKey && /^[1-9]$/.test(event.key)) { event.preventDefault(); selected = Number(event.key) - 1; void execute(); } });
+window.launcher.onFocus(() => { query.focus(); query.select(); }); window.launcher.onNotice(message => setStatus(message, true)); search();

@@ -3,6 +3,7 @@
   "workflows": [
     { "id": "calculate-copy", "keyword": "calc", "title": "Calculate and copy", "steps": [{ "type": "calc" }, { "type": "copy" }] },
     { "id": "uppercase-copy", "keyword": "upper", "title": "Uppercase and copy", "steps": [{ "type": "exec", "command": "/usr/bin/tr", "args": ["[:lower:]", "[:upper:]"] }, { "type": "copy" }] },
-    { "id": "text-calc-copy", "keyword": "total", "title": "Label, calculate, copy", "steps": [{ "type": "text", "value": "{{input}}" }, { "type": "calc" }, { "type": "copy" }] }
+    { "id": "text-calc-copy", "keyword": "total", "title": "Label, calculate, copy", "steps": [{ "type": "text", "value": "{{input}}" }, { "type": "calc" }, { "type": "copy" }] },
+    { "id": "large-type", "keyword": "large", "title": "Large Type", "steps": [{ "type": "display" }] }
   ]
 }
