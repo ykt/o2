@@ -52,7 +52,7 @@ else {
     try { store = new ConfigStore(await config()); }
     catch (error) { store = new ConfigStore({ version: 1, workflows: [] }); dialog.showErrorBox("Workflow configuration", String(error)); }
     apps = await discoverMacApps();
-    window = new BrowserWindow({ title: "o2", width: 680, height: 450, minWidth: 480, minHeight: 320, show: false, backgroundColor: "#f6f8f7", webPreferences: { preload: join(here, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+    window = new BrowserWindow({ title: "o2", width: 800, height: 700, minWidth: 600, minHeight: 420, show: false, backgroundColor: "#0b100d", webPreferences: { preload: join(here, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true } });
     window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
     window.webContents.on("will-navigate", event => event.preventDefault());
     window.on("close", event => { if (!quitting) { event.preventDefault(); window.hide(); } });

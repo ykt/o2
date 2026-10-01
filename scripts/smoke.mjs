@@ -11,26 +11,32 @@ try {
   await page.waitForFunction(() => Boolean(window.launcher));
   const query = page.locator('#query');
   await query.fill('2 + 3 * 4');
-  await page.locator('li strong').filter({ hasText: '14' }).waitFor();
+  await page.locator('.row .title').filter({ hasText: '14' }).waitFor();
   await instance.evaluate(async ({ clipboard, ClipboardItem }) => {
     globalThis.o2SavedClipboard = await Promise.all((await clipboard.read()).map(async item => new ClipboardItem(Object.fromEntries(await Promise.all(item.types.map(async type => [type, await item.getType(type)]))))));
   });
   try {
     await query.press('Enter');
-    await page.waitForFunction(() => document.querySelector('#state').textContent === 'Copied to clipboard');
+    await page.waitForFunction(() => document.querySelector('#status').textContent === 'Copied to clipboard');
     assert.equal(await instance.evaluate(({ clipboard }) => clipboard.readText()), '14');
   } finally { await instance.evaluate(async ({ clipboard }) => { await clipboard.write(globalThis.o2SavedClipboard); delete globalThis.o2SavedClipboard; }); }
   await query.fill('1/0');
-  await page.waitForFunction(() => document.querySelector('#state').textContent.includes('division by zero'));
+  await page.waitForFunction(() => document.querySelector('#status').textContent.includes('division by zero'));
   await query.fill('Safari');
-  await page.locator('li').first().waitFor();
-  assert.ok((await page.locator('li strong').allTextContents()).some(name => name.includes('Safari')));
+  await page.locator('.row').first().waitFor();
+  assert.ok((await page.locator('.row .title').allTextContents()).some(name => name.includes('Safari')));
   await query.fill('calc 20 * 3');
-  await page.locator('li strong').filter({ hasText: 'Calculate and copy' }).waitFor();
+  await page.locator('.row .title').filter({ hasText: 'Calculate and copy' }).waitFor();
   await query.fill('2 + 3 * 4');
-  await page.locator('li strong').filter({ hasText: '14' }).waitFor();
+  await page.locator('.row .title').filter({ hasText: '14' }).waitFor();
+  await page.locator('#config-button').click();
+  await page.locator('#peek.open #peek-json').waitFor();
+  await page.locator('#close-peek').click();
+  await query.press('Meta+l');
+  await page.locator('#large.open #large-text').filter({ hasText: '14' }).waitFor();
+  await page.locator('#large').click();
   await mkdir('artifacts', { recursive: true });
-  await page.screenshot({ path: 'artifacts/o2-app.png' });
+  await page.locator('#app').screenshot({ path: 'artifacts/o2-app.png' });
   await query.press('Escape');
   assert.equal(await instance.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()), false);
   await instance.evaluate(({ app }) => app.emit('activate'));
